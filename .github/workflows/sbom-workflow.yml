@@ -1,0 +1,30 @@
+name: SBOM Workflow
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Install Dependencies
+        run: npm install
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          format: spdx-json
+          output-file: sbom.json
+      - name: Validate SBOM
+        uses: aquasecurity/trivy-action@master
+        with:
+          input: sbom.json
+          format: table
+          exit-code: '1'  # Fail if vulnerabilities found
+      - name: Deploy to Staging
+        run: echo "Deploying to staging..."  # Replace with actual deployment logic
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v3
+        with:
+          name: sbom
+          path: sbom.json
+      - name: Notify Team
+        run: echo "SBOM available at artifact link" >> $GITHUB_STEP_SUMMARY
